@@ -34,6 +34,8 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Risk Zone Leaderboard API")
 
 # CORS: allow your dev + prod frontends
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
