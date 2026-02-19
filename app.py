@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field, constr, model_validator
 from sqlalchemy import Column, Integer, String, DateTime, create_engine, desc
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -85,9 +85,25 @@ class SubmitScoreIn(BaseModel):
     level: int = Field(1, ge=1, le=999)
     character: Optional[constr(strip_whitespace=True, min_length=1, max_length=24)] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def map_name_aliases(cls, data):
+        if not isinstance(data, dict):
+            return data
+        if data.get("name"):
+            return data
+
+        for alias in ("playerName", "player_name", "player", "username"):
+            alias_value = data.get(alias)
+            if isinstance(alias_value, str) and alias_value.strip():
+                data = {**data, "name": alias_value}
+                break
+        return data
+
 
 class ScoreOut(BaseModel):
     name: str
+    playerName: str
     score: int
     level: int
     character: Optional[str] = None
@@ -117,6 +133,7 @@ def get_leaderboard(limit: int = 10):
         return [
             ScoreOut(
                 name=r.name,
+                playerName=r.name,
                 score=r.score,
                 level=r.level,
                 character=r.character,
@@ -159,6 +176,7 @@ def submit_score(payload: SubmitScoreIn, request: Request, limit: int = 10):
         return [
             ScoreOut(
                 name=r.name,
+                playerName=r.name,
                 score=r.score,
                 level=r.level,
                 character=r.character,
