@@ -36,18 +36,24 @@ app = FastAPI(title="Risk Zone Leaderboard API")
 # CORS: allow your dev + prod frontends
 from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://risk-zone.vercel.app",
-        "http://michaelnobles.dev",
         # add your Vercel domain later, e.g. "https://risk-zone.vercel.app"
     ],
+    allow_origin_regex=r"^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/version")
+def version():
+    return {"version": "cors-1"}
 
 # Very lightweight in-memory rate limiting per IP (good enough for demo)
 # NOTE: resets when server restarts; for production use Redis or a gateway.
