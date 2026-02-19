@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,29 +31,26 @@ Base.metadata.create_all(bind=engine)
 # -----------------------------
 # API
 # -----------------------------
-app = FastAPI(title="Risk Zone Leaderboard API")
-
-# CORS: allow your dev + prod frontends
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI()
+APP_VERSION = "cors-1"
+app = FastAPI(title="Risk Zone Leaderboard API", version=APP_VERSION)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://risk-zone.vercel.app",
+        "https://localhost:5173",
+        "https://risk-zone.vercel.app",
         # add your Vercel domain later, e.g. "https://risk-zone.vercel.app"
     ],
-    allow_origin_regex=r"^https://.*\.vercel\.app$",
+    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.vercel\.app$",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
 @app.get("/version")
 def version():
-    return {"version": "cors-1"}
+    return {"version": APP_VERSION}
 
 # Very lightweight in-memory rate limiting per IP (good enough for demo)
 # NOTE: resets when server restarts; for production use Redis or a gateway.
@@ -87,17 +84,20 @@ class SubmitScoreIn(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def map_name_aliases(cls, data):
+    def map_name_aliases(cls, data: Any):
         if not isinstance(data, dict):
             return data
-        if data.get("name"):
+        name_value = data.get("name")
+        if isinstance(name_value, str) and name_value.strip():
             return data
 
         for alias in ("playerName", "player_name", "player", "username"):
             alias_value = data.get(alias)
-            if isinstance(alias_value, str) and alias_value.strip():
-                data = {**data, "name": alias_value}
-                break
+            if isinstance(alias_value, str):
+                alias_value = alias_value.strip()
+                if alias_value:
+                    data = {**data, "name": alias_value}
+                    break
         return data
 
 
