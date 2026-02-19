@@ -38,7 +38,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://127.0.0.1:5173",
+        "http://risk-zone.vercel.app",
+        "http://michaelnobles.dev",
         # add your Vercel domain later, e.g. "https://risk-zone.vercel.app"
     ],
     allow_credentials=True,
@@ -83,6 +84,10 @@ class ScoreOut(BaseModel):
     level: int
     character: Optional[str] = None
     created_at: str  # ISO
+
+@app.get("/")
+def root():
+    return {"ok": True, "service": "riskzone-api"}
 
 
 @app.get("/health")
