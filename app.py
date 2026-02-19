@@ -150,8 +150,8 @@ def submit_score(payload: SubmitScoreIn, request: Request, limit: int = 10):
     rate_limit(request)
 
     # Simple anti-abuse: reject obviously fake huge jumps (optional; tweak as you like)
-    if payload.score > 200000:
-        raise HTTPException(status_code=400, detail="Score out of allowed range for demo.")
+    if payload.score > 50000:
+        raise HTTPException(status_code=400, detail="Score exceeds expected range")
 
     db = SessionLocal()
     try:
